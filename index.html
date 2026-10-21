@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>光と色・光合成色素ラボ</title>
+<style>
+/* ===== 見た目の設定(色・文字サイズはここで変更できます) ===== */
+:root{
+  --bg:#f3f5fa; --card:#ffffff; --ink:#18212e; --muted:#566275;
+  --accent:#1c5bb8; --accent-soft:#e3edfb; --ok:#0a7a48; --ok-soft:#e1f5ea;
+  --warn:#9a4b00; --warn-soft:#fff1de; --line:#cfd6e2;
+  --fs:18px;
+}
+body.big{ --fs:22px; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-size:var(--fs); line-height:1.65;
+  font-family:"Hiragino Sans","Yu Gothic UI","Meiryo","Noto Sans JP",sans-serif; }
+header{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 20px; background:#14213a; color:#fff; }
+header h1{ font-size:1.25em; margin:0; flex:1 1 auto; }
+header button{ background:#fff; color:#14213a; }
+.tabs{ display:flex; gap:6px; padding:10px 16px 0; background:#14213a; flex-wrap:wrap; }
+.tab{ border:0; border-radius:10px 10px 0 0; padding:10px 18px; font-size:1em; font-weight:700; cursor:pointer;
+  background:#2c3d63; color:#dfe7f7; min-height:48px; }
+.tab[aria-selected="true"]{ background:var(--bg); color:var(--ink); }
+.now{ margin:12px 16px 0; padding:10px 16px; border-left:8px solid var(--accent); background:var(--accent-soft);
+  border-radius:8px; font-size:.95em; }
+.now b{ color:var(--accent); }
+.now span{ margin-right:1.2em; }
+main{ padding:12px 16px 40px; max-width:1200px; margin:0 auto; }
+.panel[hidden], .sub[hidden], [hidden]{ display:none !important; }
+.subnav{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 14px; }
+.subbtn{ border:2px solid var(--accent); background:#fff; color:var(--accent); border-radius:999px; padding:8px 18px;
+  font-size:.95em; font-weight:700; cursor:pointer; min-height:46px; }
+.subbtn[aria-selected="true"]{ background:var(--accent); color:#fff; }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin:0 0 16px; }
+.card h2{ font-size:1.25em; margin:0 0 6px; }
+.card h3{ font-size:1.05em; margin:12px 0 4px; }
+.btn{ font-size:1em; min-height:48px; padding:8px 18px; border-radius:10px; border:2px solid var(--accent);
+  background:#fff; color:var(--accent); font-weight:700; cursor:pointer; font-family:inherit; }
+.btn.primary{ background:var(--accent); color:#fff; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+.choices{ display:grid; gap:10px; margin:10px 0; }
+.choice{ text-align:left; font-size:1em; padding:14px 18px; border-radius:12px; border:3px solid var(--line);
+  background:#fff; cursor:pointer; font-family:inherit; min-height:56px; color:var(--ink); }
+.choice:hover{ border-color:var(--accent); }
+.choice.sel{ border-color:var(--accent); background:var(--accent-soft); }
+.choice.right{ border-color:var(--ok); background:var(--ok-soft); }
+.choice.wrong{ border-color:var(--warn); background:var(--warn-soft); }
+.choice .sw{ display:inline-block; width:1.1em; height:1.1em; border-radius:4px; vertical-align:-.15em; margin-right:.4em; border:2px solid #333; }
+.row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:8px 0; }
+.row label{ font-weight:600; }
+select, input[type=range]{ font-size:1em; font-family:inherit; }
+select{ min-height:46px; padding:4px 10px; border-radius:8px; border:2px solid var(--line); }
+input[type=range]{ width:min(420px,100%); accent-color:var(--accent); height:32px; }
+canvas{ width:100%; display:block; background:#fff; border-radius:8px; border:1px solid var(--line); }
+canvas.dark{ background:#0f1626; border-color:#0f1626; }
+.scrollx{ overflow-x:auto; }
+.scrollx canvas{ min-width:640px; aspect-ratio:960/360; }
+.chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.chip{ border:3px solid var(--line); border-radius:999px; padding:8px 16px; font-size:.95em; background:#fff; cursor:pointer;
+  font-weight:700; min-height:46px; font-family:inherit; color:var(--ink); }
+.chip.done{ border-color:var(--ok); background:var(--ok-soft); }
+.stages{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.stage{ text-align:center; font-size:.9em; transition:opacity .4s; }
+.stage.dim{ opacity:.12; }
+.stage .cap{ font-weight:700; margin-top:4px; }
+.stage .sub2{ color:var(--muted); font-size:.85em; }
+.swatch{ border:3px solid #222; border-radius:10px; min-height:90px; aspect-ratio:2.2; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:1.05em; }
+.tube{ width:90px; height:150px; border:4px solid #444; border-radius:6px 6px 40px 40px; margin:0 auto; background:#fff; }
+.msg{ padding:12px 16px; border-radius:10px; margin:10px 0; }
+.msg.ok{ background:var(--ok-soft); border-left:8px solid var(--ok); }
+.msg.warn{ background:var(--warn-soft); border-left:8px solid var(--warn); }
+.msg.info{ background:var(--accent-soft); border-left:8px solid var(--accent); }
+.key{ font-size:1.2em; font-weight:800; text-align:center; padding:12px; margin:12px 0; border-radius:12px;
+  background:#fff8c9; border:3px solid #d9a800; }
+.pig-list{ display:flex; flex-wrap:wrap; gap:8px 18px; margin:6px 0; }
+.pig-list label{ cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:600; min-height:40px; }
+.pig-list input{ width:22px; height:22px; }
+details{ margin:8px 0; border:1px solid var(--line); border-radius:10px; padding:6px 14px; background:#fafbfd; }
+summary{ cursor:pointer; font-weight:700; min-height:36px; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.bars div{ display:flex; align-items:center; gap:8px; margin:3px 0; }
+.bars i{ display:inline-block; height:20px; background:var(--accent); border-radius:4px; }
+.term{ border-bottom:2px dotted var(--accent); cursor:help; position:relative; color:inherit; }
+.term::after{ content:attr(data-tip); display:none; position:absolute; left:0; top:1.6em; z-index:20; width:min(320px,80vw);
+  background:#14213a; color:#fff; padding:10px 12px; border-radius:8px; font-size:.85rem; line-height:1.55; font-weight:400; box-shadow:0 4px 14px #0005; }
+.term:hover::after, .term.open::after{ display:block; }
+.legendtag{ display:inline-block; padding:2px 10px; border-radius:6px; font-weight:700; font-size:.85em; margin-right:6px; }
+.tag-light{ background:#14213a; color:#fff; }
+.tag-obj{ background:#fff; color:#14213a; border:2px solid #14213a; }
+footer{ text-align:center; font-size:.8em; color:var(--muted); padding:0 16px 24px; }
+.grid3{ display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:8px; align-items:center; text-align:center; }
+.grid3 .op{ font-size:2em; font-weight:800; }
+.grid3 .cap{ font-weight:700; }
+.rgbrow{ display:grid; grid-template-columns:5em 1fr 3em; gap:8px; align-items:center; max-width:560px; }
+.rgbrow input{ width:100%; }
+@media (max-width:820px){
+  .grid3{ grid-template-columns:1fr; }
+  .stages{ grid-template-columns:1fr 1fr; }
+  .grid2{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 光と色・光合成色素ラボ</h1>
+  <button class="btn" id="bigBtn" aria-pressed="false">文字を大きくする</button>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-mode="1" aria-selected="false">① 光と色の基本</button>
+  <button class="tab" role="tab" data-mode="2" aria-selected="true">② 光合成色素の吸収スペクトル</button>
+</div>
+
+<div class="now" id="now" aria-live="polite">
+  <b>いま見ているもの:</b><span id="nowSee"></span>
+  <b>変わったこと:</b><span id="nowChg"></span>
+</div>
+
+<main>
+
+<!-- ============================================================
+     モード1:光と色の基本
+     ============================================================ -->
+<section class="panel" id="mode1" hidden>
+  <div class="card" id="m1Pred">
+    <h2>まず予想しよう</h2>
+    <p><b>緑の葉に、赤い光だけを当てたら、葉はどう見える?</b></p>
+    <div class="choices" id="m1Choices">
+      <button class="choice" data-k="A"><b>A.</b> 緑のまま見える</button>
+      <button class="choice" data-k="B"><b>B.</b> 赤く見える</button>
+      <button class="choice" data-k="C"><b>C.</b> 黒っぽく見える</button>
+    </div>
+    <div id="m1PredFb" class="msg info" hidden></div>
+  </div>
+
+  <div class="card">
+    <h2>光源 × 物体 = 目に届く光</h2>
+    <p>物が見えるのは、光が物体で<span class="term" data-term="refl">反射</span>されて目に届くから。<b>目に届く光=入射した光 × 物体の反射率</b>で計算します。光源と物体を変えて試そう。</p>
+    <div class="row">
+      <label for="m1Light">☀ 光源(光の色):</label><select id="m1Light"></select>
+      <label for="m1Obj">🧪 物体:</label><select id="m1Obj"></select>
+    </div>
+    <div class="scrollx"><canvas id="m1Scene" class="dark"></canvas></div>
+    <div class="grid3" style="margin-top:12px">
+      <div><canvas id="m1G1"></canvas><div class="cap">① 入射する光 ☀</div></div>
+      <div class="op">×</div>
+      <div><canvas id="m1G2"></canvas><div class="cap">② 物体の反射率 🧪</div></div>
+      <div class="op">=</div>
+      <div><canvas id="m1G3"></canvas><div class="cap">③ 目に届く光</div></div>
+    </div>
+    <div class="msg info" id="m1Readout"></div>
+    <div class="key">物の色は、反射(または透過)された光の色!</div>
+  </div>
+
+  <div class="card">
+    <h2>光を混ぜてみよう(加法混色)</h2>
+    <p>赤(R)・緑(G)・青(B)の光の強さを変えて混ぜます。光は<b>混ぜるほど明るくなり</b>、3色を全部混ぜると白に近づきます。</p>
+    <div class="rgbrow"><label for="aR">R(赤)</label><input type="range" id="aR" min="0" max="255" value="255"><b id="aRt">255</b>
+      <label for="aG">G(緑)</label><input type="range" id="aG" min="0" max="255" value="255"><b id="aGt">255</b>
+      <label for="aB">B(青)</label><input type="range" id="aB" min="0" max="255" value="0"><b id="aBt">0</b></div>
+    <div class="row">
+      <button class="btn" data-add="255,255,0" style="min-height:42px">赤+緑</button>
+      <button class="btn" data-add="0,255,255" style="min-height:42px">緑+青</button>
+      <button class="btn" data-add="255,0,255" style="min-height:42px">赤+青</button>
+      <button class="btn" data-add="255,255,255" style="min-height:42px">赤+緑+青</button>
+    </div>
+    <div class="swatch" id="addSw" style="max-width:360px"></div>
+    <p id="addTxt" style="margin:6px 0"></p>
+  </div>
+</section>
+
+<!-- ============================================================
+     モード2:光合成色素の吸収スペクトル
+     ============================================================ -->
+<section class="panel" id="mode2">
+  <div class="subnav" role="tablist">
+    <button class="subbtn" data-sub="A" aria-selected="true">① 予想して実験</button>
+    <button class="subbtn" data-sub="E" aria-selected="false">② 🌿 葉でためす</button>
+    <button class="subbtn" data-sub="B" aria-selected="false">③ 吸収スペクトルを見る</button>
+    <button class="subbtn" data-sub="C" aria-selected="false">④ 引き算パズル</button>
+    <button class="subbtn" data-sub="D" aria-selected="false">⑤ オリジナル色素づくり</button>
+  </div>
+
+  <!-- ---------- 2-A:予想と実験 ---------- -->
+  <div class="sub" id="subA">
+    <div class="card" id="predictCard">
+      <h2>まず予想しよう</h2>
+      <p>葉の緑色のもとになっている<span class="term" data-term="chl">クロロフィルa</span>(緑色の色素)。<br>
+      <b>クロロフィルaが緑色に見えるのは、どの光をよく吸収するから?</b></p>
+      <div class="choices" id="predChoices">
+        <button class="choice" data-k="A"><b>A.</b> 緑の光をよく吸収する</button>
+        <button class="choice" data-k="B"><b>B.</b> 緑の光をあまり吸収しない</button>
+        <button class="choice" data-k="C"><b>C.</b> わからない</button>
+      </div>
+      <div id="predFeedback" class="msg info" hidden></div>
+    </div>
+
+    <div id="expArea" hidden>
+      <div class="card">
+        <h2>実験:色素の溶液に光を当ててみよう</h2>
+        <p>試験管の中は、色素を溶かした溶液です。左から光を当てると、<b>吸収された光は消えて</b>、<b>吸収されなかった光</b>だけが右へ通り抜けます。</p>
+        <div class="row">
+          <label for="expPig">色素:</label>
+          <select id="expPig"></select>
+          <label><input type="radio" name="expMode" value="mono" checked> 単色光(1つの波長)</label>
+          <label><input type="radio" name="expMode" value="white"> 白色光(すべての波長)</label>
+        </div>
+        <div class="row">
+          <label for="expWl">入射する光の波長:<b id="expWlTxt"></b></label>
+          <input type="range" id="expWl" min="400" max="700" step="1" value="550">
+        </div>
+        <div class="chips" id="expChips">
+          <button class="chip" data-wl="450">青の光 450nm <span class="ck"></span></button>
+          <button class="chip" data-wl="550">緑の光 550nm <span class="ck"></span></button>
+          <button class="chip" data-wl="660">赤の光 660nm <span class="ck"></span></button>
+        </div>
+        <p style="margin:6px 0">
+          <span class="legendtag tag-light">☀ 光の色</span>=飛んでいる光 &nbsp;
+          <span class="legendtag tag-obj">🧪 見かけの色</span>=物体(溶液)の色
+        </p>
+        <div class="scrollx"><canvas id="expCv" class="dark"></canvas></div>
+        <div class="msg info" id="expReadout"></div>
+      </div>
+
+      <div class="card">
+        <h2>白色光を当てたら、溶液の色はどう決まる?</h2>
+        <p>白色光には、すべての波長の光が混ざっています。<b>①入射 → ②吸収で削られる → ③残った光 → ④目に届いて見える色</b></p>
+        <div class="row"><button class="btn" id="stagePlay">▶ 順番に見る</button></div>
+        <div class="stages" id="stages">
+          <div class="stage" data-s="1"><canvas id="st1"></canvas><div class="cap">① 入射する光</div><div class="sub2">白色光(☀ すべての波長)</div></div>
+          <div class="stage" data-s="2"><canvas id="st2"></canvas><div class="cap">② 吸収で削られる</div><div class="sub2">斜線=吸収された光</div></div>
+          <div class="stage" data-s="3"><canvas id="st3"></canvas><div class="cap">③ 残った光</div><div class="sub2">吸収されなかった波長</div></div>
+          <div class="stage" data-s="4"><div class="swatch" id="st4sw"></div><div class="cap">④ 見える色 🧪</div><div class="sub2" id="st4name"></div></div>
+        </div>
+      </div>
+
+      <div class="card" id="revealCard">
+        <h2>答え合わせ</h2>
+        <p id="revealHint"></p>
+        <div class="row">
+          <button class="btn primary" id="revealBtn" disabled>答え合わせをする</button>
+          <button class="btn" id="revealSkip" style="min-height:40px">待ちきれない!今すぐ見る</button>
+        </div>
+        <div id="revealBody" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 2-E:本物の葉でためす ---------- -->
+  <div class="sub" id="subE" hidden>
+    <div class="card">
+      <h2>🌿 本物の植物の葉に光を当ててみよう</h2>
+      <p>葉に当たった光は、<b>吸収</b>・<span class="term" data-term="refl">反射</span>・<span class="term" data-term="trans">透過</span>のどれかになります。<b>上から見える色は反射した光、下から(光にすかして)見える色は透過した光</b>の色です。</p>
+      <p><b>予想:緑の光(550nm)を当てたら、葉はその光をどうする?</b></p>
+      <div class="choices" id="leafChoices">
+        <button class="choice" data-k="A"><b>A.</b> 大部分を吸収する</button>
+        <button class="choice" data-k="B"><b>B.</b> 大部分を吸収せず、反射・透過する</button>
+      </div>
+      <div id="leafPredFb" class="msg info" hidden></div>
+      <div class="row">
+        <label><input type="radio" name="leafMode" value="white" checked> 白色光(太陽の光)</label>
+        <label><input type="radio" name="leafMode" value="mono"> 単色光</label>
+        <label for="leafWl"><b id="leafWlTxt"></b></label>
+        <input type="range" id="leafWl" min="400" max="700" step="1" value="550">
+      </div>
+      <div class="chips" id="leafChips">
+        <button class="chip" data-wl="450">青の光 450nm</button>
+        <button class="chip" data-wl="550">緑の光 550nm</button>
+        <button class="chip" data-wl="660">赤の光 660nm</button>
+      </div>
+      <p style="margin:6px 0"><span class="legendtag tag-light">☀ 光の色</span>=飛んでいる光 &nbsp;<span class="legendtag tag-obj">🌿 見かけの色</span>=葉の色(目に届いた光の色)</p>
+      <div class="scrollx"><canvas id="leafCv" class="dark" style="aspect-ratio:960/420"></canvas></div>
+      <div class="grid2" style="margin-top:10px">
+        <div><div class="swatch" id="leafTop" style="aspect-ratio:4"></div><div style="text-align:center;font-weight:700">⬆ 上から見た葉(反射した光)</div></div>
+        <div><div class="swatch" id="leafBottom" style="aspect-ratio:4"></div><div style="text-align:center;font-weight:700">⬇ 光にすかして見た葉(透過した光)</div></div>
+      </div>
+      <div class="msg info" id="leafReadout"></div>
+      <div class="key">葉が緑に見えるのは、緑の光を吸収しないで、反射・透過するから!</div>
+    </div>
+  </div>
+
+  <!-- ---------- 2-B:吸収スペクトル ---------- -->
+  <div class="sub" id="subB" hidden>
+    <div class="card">
+      <h2><span class="term" data-term="abs">吸収スペクトル</span>を見てみよう</h2>
+      <p>色素を選ぶと、<b>波長ごとの吸収率</b>がグラフになります。下の虹色バーは、同じ波長の光の色です。複数選ぶと「葉全体」の吸収(黒い太線)も見られます。</p>
+      <div class="pig-list" id="simPigs"></div>
+      <canvas id="simGraph"></canvas>
+      <canvas id="simBar" style="border:0;background:transparent"></canvas>
+      <div class="msg info" id="simReadout">グラフの上をなぞる(タップする)と、その波長での吸収率が出ます。</div>
+      <div class="row">
+        <div class="swatch" id="simSw" style="width:150px"></div>
+        <div id="simSwTxt"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 2-C:引き算パズル ---------- -->
+  <div class="sub" id="subC" hidden>
+    <div class="card">
+      <h2>引き算パズル:取り除くと、何色が残る?</h2>
+      <p id="puzQ"></p>
+      <canvas id="puzCv1"></canvas>
+      <div class="choices" id="puzChoices" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))"></div>
+      <div id="puzResult" hidden>
+        <div class="grid2">
+          <div><canvas id="puzCv2"></canvas><div style="text-align:center;font-weight:700">残った光</div></div>
+          <div><div class="swatch" id="puzSw"></div><div style="text-align:center;font-weight:700">🧪 見える色</div></div>
+        </div>
+        <div class="msg" id="puzMsg"></div>
+        <button class="btn primary" id="puzNext">次の問題へ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- 2-D:オリジナル色素 ---------- -->
+  <div class="sub" id="subD" hidden>
+    <div class="card">
+      <h2>オリジナル色素づくり</h2>
+      <p>グラフの上を<b>ドラッグ</b>して、色素が吸収する波長の範囲を決めよう。その色素の溶液が何色に見えるかが自動で出ます。</p>
+      <div class="row">
+        <span>お題:</span>
+        <button class="btn" data-preset="bg" style="min-height:42px">青と緑を吸収</button>
+        <button class="btn" data-preset="br" style="min-height:42px">青と赤を吸収</button>
+        <button class="btn" data-preset="g" style="min-height:42px">緑だけ吸収</button>
+        <button class="btn" data-preset="gr" style="min-height:42px">緑と赤を吸収</button>
+      </div>
+      <canvas id="cusGraph" style="touch-action:none;cursor:crosshair"></canvas>
+      <canvas id="cusBar" style="border:0;background:transparent"></canvas>
+      <div class="row">
+        <label for="cusStr">吸収の強さ:</label>
+        <input type="range" id="cusStr" min="0.3" max="1" step="0.1" value="1">
+        <button class="btn" id="cusUndo" style="min-height:42px">最後の帯を消す</button>
+        <button class="btn" id="cusClear" style="min-height:42px">全部消す</button>
+      </div>
+      <div class="row">
+        <label for="cusFrom">(ドラッグが難しいとき)はじまり <b id="cusFromT">500</b>nm</label>
+        <input type="range" id="cusFrom" min="400" max="700" step="5" value="500">
+        <label for="cusTo">おわり <b id="cusToT">580</b>nm</label>
+        <input type="range" id="cusTo" min="400" max="700" step="5" value="580">
+        <button class="btn" id="cusAdd" style="min-height:42px">この範囲を追加</button>
+      </div>
+      <div class="grid2">
+        <div><div class="tube" id="cusTube"></div><div style="text-align:center;font-weight:700">🧪 溶液の見かけの色:<span id="cusName"></span></div></div>
+        <div><canvas id="cusRem"></canvas><div style="text-align:center;font-weight:700">残った光(目に届く光)</div></div>
+      </div>
+      <div class="msg info" id="cusMsg"></div>
+    </div>
+  </div>
+</section>
+
+
+</main>
+<footer>※ このアプリのスペクトルは教科書レベルの「おおよその形」を表したもので、正確な実測値ではありません。</footer>
+
+<script>
+"use strict";
+/* ================================================================
+   ★ データ部分(ここを編集すると色素の形を変えられます)
+   ----------------------------------------------------------------
+   bands: 吸収の山(ガウス曲線)を足し合わせて作ります。
+          [中心の波長 nm, 山の幅(σ) nm, 山の高さ(0〜1)]
+   color/mark: グラフの線の色と目印(色覚多様性のため色+形で区別)
+   ================================================================ */
+const PIGMENTS = {
+  chlA:{ name:'クロロフィルa', color:'#007a5a', mark:'circle',
+    bands:[[408,12,0.35],[432,13,0.80],[460,22,0.30],[580,30,0.06],[622,16,0.45],[662,11,0.85]] },
+  chlB:{ name:'クロロフィルb', color:'#1f78c8', mark:'square',
+    bands:[[435,14,0.55],[455,15,1.00],[595,14,0.10],[642,12,0.65]] },
+  car:{  name:'カロテン(カロテノイド)', color:'#d98200', mark:'triangle',
+    bands:[[425,15,0.55],[451,16,1.00],[480,16,0.90],[505,14,0.20]] },
+  xan:{  name:'キサントフィル', color:'#b8461b', mark:'diamond',
+    bands:[[422,14,0.60],[445,14,1.00],[474,14,0.85]] },
+  // 実験ビュー用:葉の抽出液のイメージ(各色素の重み付き合成)
+  leaf:{ name:'葉の色素まとめ(a+b+カロテン+キサントフィル)', hidden:true,
+    combine:[['chlA',1.0],['chlB',0.6],['car',0.5],['xan',0.4]] }
+};
+/* 吸収の強さ → 透過率 の係数(大きいほど濃い溶液のイメージ) */
+const DENSITY = 1.8;
+
+/* 用語のやさしい説明(ホバー/タップで表示) */
+const TERMS = {
+  abs:'吸収スペクトル:光の波長ごとに、色素がどれくらい光を吸収するかを表したグラフ。',
+  act:'作用スペクトル:光の波長ごとに、光合成がどれくらい活発に進むかを表したグラフ。',
+  wl:'波長:光の波の「山から山までの長さ」。単位はnm(ナノメートル)。短いと青紫、長いと赤に見える。',
+  refl:'反射:光が物体の表面ではね返されること。',
+  trans:'透過:光が物体の中を通り抜けること。',
+  chl:'クロロフィル:葉緑体にある緑色の色素。光合成で光を吸収する中心役。'
+};
+
+/* ================================================================
+   共通:波長→色の変換、スペクトル→見かけの色
+   ================================================================ */
+const N = 301;                                  // 400〜700nm を1nm刻み
+const $ = id => document.getElementById(id);
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+/* 波長(nm)→ RGB(0〜1, 線形近似)。よく使われる簡易変換 */
+function brutonLin(l){
+  let r=0,g=0,b=0;
+  if(l<440){ r=-(l-440)/60; b=1; }
+  else if(l<490){ g=(l-440)/50; b=1; }
+  else if(l<510){ g=1; b=-(l-510)/20; }
+  else if(l<580){ r=(l-510)/70; g=1; }
+  else if(l<645){ r=1; g=-(l-645)/65; }
+  else { r=1; }
+  const f = l<420 ? 0.3+0.7*(l-380)/40 : (l>700 ? 0.3+0.7*(780-l)/80 : 1);
+  return [r*f, g*f, b*f];
+}
+const LIN = Array.from({length:N},(_,i)=>brutonLin(400+i));
+/* 白色光(全波長が同じ強さ)がちょうど白になるようにする補正値 */
+const WHITE = [0,1,2].map(c => LIN.reduce((s,v)=>s+v[c],0));
+
+function wlRGB(l){ const v=brutonLin(l); return v.map(x=>Math.round(255*Math.pow(clamp01(x),0.8))); }
+function wlCss(l,a){ const c=wlRGB(l); return a==null?`rgb(${c})`:`rgba(${c},${a})`; }
+
+/* スペクトル S(長さN, 0〜1) → 目に見える色。{css, rgb, m} */
+function colorOf(S,gain){
+  const lin=[0,0,0];
+  for(let i=0;i<N;i++) for(let c=0;c<3;c++) lin[c]+=S[i]*LIN[i][c];
+  for(let c=0;c<3;c++) lin[c]*=(gain||1)/WHITE[c];
+  const m=Math.max(...lin);
+  if(m<1e-4) return {css:'rgb(0,0,0)', rgb:[0,0,0], m:0};
+  const br=Math.pow(Math.min(1,m*1.25),0.85);          // 暗い光は暗く見せる
+  const rgb=lin.map(v=>Math.round(255*Math.pow(v/m,0.7)*br));
+  return {css:`rgb(${rgb})`, rgb, m};
+}
+function textColorFor(rgb){ return (0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2])>140 ? '#111' : '#fff'; }
+
+/* RGB → 日本語の色名 */
+function colorName(rgb){
+  const [r,g,b]=rgb.map(v=>v/255);
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn;
+  if(mx<0.25) return 'ほぼ黒(暗い)';
+  if(d/mx<0.18) return mx>0.8?'白':'灰色(暗め)';
+  let h; if(d===0)h=0;
+  else if(mx===r) h=60*(((g-b)/d+6)%6);
+  else if(mx===g) h=60*((b-r)/d+2); else h=60*((r-g)/d+4);
+  const dark = mx<0.5 ? '暗い' : '';
+  let n;
+  if(h<15||h>=345) n='赤'; else if(h<33) n='だいだい色'; else if(h<68) n='黄色';
+  else if(h<88) n='黄緑'; else if(h<160) n='緑'; else if(h<200) n='青緑(シアン)';
+  else if(h<255) n='青'; else if(h<272) n='紫'; else n='赤紫(ピンク)';
+  return dark+n;
+}
+/* 単色光の色名 */
+function lightName(l){
+  if(l<440) return '青紫'; if(l<490) return '青'; if(l<510) return '青緑';
+  if(l<570) return '緑'; if(l<590) return '黄'; if(l<620) return 'だいだい'; return '赤';
+}
+
+/* 色素の吸収率 配列(長さN, 0〜1)を事前計算 */
+const ABS = {};
+function buildAbs(id){
+  if(ABS[id]) return ABS[id];
+  const p=PIGMENTS[id], a=new Array(N).fill(0);
+  if(p.combine){
+    for(let i=0;i<N;i++){
+      let keep=1;
+      for(const [cid,w] of p.combine) keep*=1-w*buildAbs(cid)[i];
+      a[i]=1-keep;
+    }
+  }else{
+    for(let i=0;i<N;i++){
+      const l=400+i; let s=0;
+      for(const [c,sg,h] of p.bands) s+=h*Math.exp(-((l-c)*(l-c))/(2*sg*sg));
+      a[i]=Math.min(1,s);
+    }
+  }
+  return ABS[id]=a;
+}
+Object.keys(PIGMENTS).forEach(buildAbs);
+const transOf = a => Math.pow(10,-DENSITY*a);            // 吸収率→透過率
+const transArr = absArr => absArr.map(transOf);
+
+/* ================================================================
+   共通:キャンバス描画の補助
+   ================================================================ */
+function fit(cv, ratio, fixedW){
+  const w = fixedW || cv.clientWidth || 600, h = Math.round(w*ratio);
+  const d = window.devicePixelRatio || 1;
+  cv.width = w*d; cv.height = h*d;
+  if(!fixedW) cv.style.height = h+'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(d,0,0,d,0,0);
+  return {ctx,w,h};
+}
+const GM = {L:56,R:16,T:18,B:12};
+const gx = (w,l)=> GM.L+(l-400)/300*(w-GM.L-GM.R);
+const lamAt = (w,x)=> Math.max(400,Math.min(700,400+(x-GM.L)/(w-GM.L-GM.R)*300));
+
+function drawMark(ctx,t,x,y,s){
+  ctx.beginPath();
+  if(t==='circle'){ ctx.arc(x,y,s,0,7); }
+  else if(t==='square'){ ctx.rect(x-s,y-s,2*s,2*s); }
+  else if(t==='triangle'){ ctx.moveTo(x,y-s*1.2); ctx.lineTo(x+s*1.1,y+s*.9); ctx.lineTo(x-s*1.1,y+s*.9); ctx.closePath(); }
+  else if(t==='diamond'){ ctx.moveTo(x,y-s*1.3); ctx.lineTo(x+s*1.1,y); ctx.lineTo(x,y+s*1.3); ctx.lineTo(x-s*1.1,y); ctx.closePath(); }
+  else if(t==='cross'){ ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s); ctx.moveTo(x+s,y-s); ctx.lineTo(x-s,y+s); }
+  else { ctx.moveTo(x-s*1.2,y); ctx.lineTo(x+s*1.2,y); ctx.moveTo(x,y-s*1.2); ctx.lineTo(x,y+s*1.2); }
+  ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke();
+}
+
+/* 吸収率グラフの枠(縦軸・目盛り・「緑の光」の帯) */
+function drawGraphFrame(ctx,w,h,yLabel){
+  ctx.clearRect(0,0,w,h);
+  const top=GM.T, bot=h-GM.B, ph=bot-top;
+  // 緑の光の帯(色だけに頼らず文字でも示す)
+  const x1=gx(w,495), x2=gx(w,570);
+  ctx.fillStyle='rgba(40,170,80,0.13)'; ctx.fillRect(x1,top,x2-x1,ph);
+  ctx.strokeStyle='rgba(20,120,50,0.6)'; ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x1,top); ctx.lineTo(x1,bot); ctx.moveTo(x2,top); ctx.lineTo(x2,bot); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#0b5d2a'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('緑の光', (x1+x2)/2, top+16);
+  // 縦軸
+  ctx.strokeStyle='#cfd6e2'; ctx.lineWidth=1; ctx.fillStyle='#333'; ctx.textAlign='right'; ctx.font='14px sans-serif';
+  [0,0.5,1].forEach(v=>{
+    const y=bot-v*ph; ctx.beginPath(); ctx.moveTo(GM.L,y); ctx.lineTo(w-GM.R,y); ctx.stroke();
+    ctx.fillText(Math.round(v*100)+'%', GM.L-6, y+5);
+  });
+  ctx.save(); ctx.translate(14,(top+bot)/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center';
+  ctx.fillText(yLabel||'吸収率',0,0); ctx.restore();
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(GM.L,top); ctx.lineTo(GM.L,bot); ctx.lineTo(w-GM.R,bot); ctx.stroke();
+}
+function plotCurve(ctx,w,h,arr,opt){
+  const top=GM.T, bot=h-GM.B, ph=bot-top;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){ const x=gx(w,400+i), y=bot-arr[i]*ph; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+  if(opt.fill){ const p=new Path2D(); ctx.save(); ctx.lineTo(gx(w,700),bot); ctx.lineTo(gx(w,400),bot); ctx.closePath(); ctx.fillStyle=opt.fill; ctx.fill(); ctx.restore();
+    ctx.beginPath(); for(let i=0;i<N;i++){ const x=gx(w,400+i), y=bot-arr[i]*ph; i?ctx.lineTo(x,y):ctx.moveTo(x,y); } }
+  ctx.strokeStyle=opt.color; ctx.lineWidth=opt.lw||3; ctx.setLineDash(opt.dash||[]); ctx.stroke(); ctx.setLineDash([]);
+  if(opt.mark){
+    ctx.lineWidth=2;
+    for(let l=410;l<=690;l+=40){ drawMark(ctx,opt.mark,gx(w,l),bot-arr[l-400]*ph,5); }
+  }
+}
+/* 波長軸の虹色バー(グラフと左右の位置を揃える) */
+function drawRainbow(cv){
+  const w0=cv.clientWidth||600, {ctx,w,h}=fit(cv,70/w0);
+  ctx.clearRect(0,0,w,h);
+  const x0=gx(w,400), x1=gx(w,700);
+  for(let i=0;i<N;i++){ ctx.fillStyle=wlCss(400+i); ctx.fillRect(gx(w,400+i),0,(x1-x0)/300+1,28); }
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.5; ctx.strokeRect(x0,0,x1-x0,28);
+  ctx.fillStyle='#222'; ctx.font='14px sans-serif'; ctx.textAlign='center';
+  for(let l=400;l<=700;l+=50){ const x=gx(w,l); ctx.beginPath(); ctx.moveTo(x,28); ctx.lineTo(x,34); ctx.stroke(); ctx.fillText(l,x,48); }
+  ctx.textAlign='left'; ctx.fillText('nm',x1+4>w-24?w-24:x1+4,48);
+  ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+  [['青紫',425],['青',470],['緑',535],['黄',580],['橙',605],['赤',660]].forEach(([n,l])=>ctx.fillText(n,gx(w,l),66));
+}
+/* 小さなスペクトル図:S=残る光(色付き柱)、A=取り除かれた光(斜線) */
+let HATCH=null;
+function hatchPattern(ctx){
+  if(!HATCH){ const c=document.createElement('canvas'); c.width=c.height=8; const x=c.getContext('2d');
+    x.strokeStyle='#777'; x.lineWidth=1.5; x.beginPath(); x.moveTo(0,8); x.lineTo(8,0); x.stroke(); HATCH=c; }
+  return ctx.createPattern(HATCH,'repeat');
+}
+function drawSpec(cv,S,A,ratio){
+  const {ctx,w,h}=fit(cv,ratio||0.66);
+  const L=8,R=8,T=8,B=26, pw=w-L-R, ph=h-T-B;
+  ctx.clearRect(0,0,w,h);
+  const pat=hatchPattern(ctx), cw=pw/(N-1)+1;
+  for(let i=0;i<N;i++){
+    const s=typeof S==='number'?S:S[i], x=L+i/(N-1)*pw;
+    ctx.fillStyle=wlCss(400+i); ctx.fillRect(x,T+ph-s*ph,cw,s*ph);
+    if(A){ const a=A[i]; if(a>0.01){ ctx.fillStyle=pat; ctx.fillRect(x,T+ph-(s+a)*ph,cw,a*ph); } }
+  }
+  ctx.strokeStyle='#222'; ctx.lineWidth=1.5; ctx.strokeRect(L,T,pw,ph);
+  ctx.fillStyle='#222'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+  [400,500,600,700].forEach(l=>ctx.fillText(l,L+(l-400)/300*pw,h-8));
+}
+
+/* ================================================================
+   画面全体:タブ、「いま見ているもの」、用語ヒント
+   ================================================================ */
+function setNow(see,chg){ $('nowSee').textContent=see; $('nowChg').textContent=chg; }
+
+document.querySelectorAll('[data-term]').forEach(el=>{
+  el.classList.add('term'); el.dataset.tip=TERMS[el.dataset.term]; el.tabIndex=0;
+  el.addEventListener('click',e=>{ const o=el.classList.contains('open'); closeTerms(); if(!o) el.classList.add('open'); e.stopPropagation(); });
+});
+function closeTerms(){ document.querySelectorAll('.term.open').forEach(t=>t.classList.remove('open')); }
+document.addEventListener('click',closeTerms);
+
+let curMode='2', curSub='A';
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showMode(b.dataset.mode)));
+function showMode(m){
+  curMode=m;
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.mode===m));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden = p.id!=='mode'+m);
+  renderActive();
+}
+document.querySelectorAll('.subbtn').forEach(b=>b.addEventListener('click',()=>showSub(b.dataset.sub)));
+function showSub(s){
+  curSub=s;
+  document.querySelectorAll('.subbtn').forEach(b=>b.setAttribute('aria-selected',b.dataset.sub===s));
+  ['A','B','C','D','E'].forEach(k=>$('sub'+k).hidden=k!==s);
+  renderActive();
+}
+$('bigBtn').addEventListener('click',()=>{
+  const on=document.body.classList.toggle('big'); $('bigBtn').setAttribute('aria-pressed',on);
+  $('bigBtn').textContent = on?'文字を小さくする':'文字を大きくする'; renderActive();
+});
+function renderActive(){
+  if(curMode==='2'){
+    if(curSub==='A') renderA();
+    if(curSub==='B') renderB();
+    if(curSub==='C') renderC();
+    if(curSub==='D') renderD();
+    if(curSub==='E') renderLeaf();
+  }
+  if(window.renderMode1 && curMode==='1') renderMode1();
+}
+let rzT; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(renderActive,120); });
+
+/* ================================================================
+   モード2-A:予想 → 実験 → 答え合わせ
+   ================================================================ */
+const S2 = { pred:null, tried:{450:false,550:false,660:false}, revealed:false };
+
+document.querySelectorAll('#predChoices .choice').forEach(btn=>btn.addEventListener('click',()=>{
+  const first=S2.pred===null;
+  S2.pred=btn.dataset.k;
+  document.querySelectorAll('#predChoices .choice').forEach(b=>b.classList.toggle('sel',b===btn));
+  const fb=$('predFeedback'); fb.hidden=false;
+  fb.innerHTML=`予想「${S2.pred}」を記録しました。では、<b>実際に光を当てて</b>確かめてみよう!(下へスクロール)`;
+  $('expArea').hidden=false; renderA();
+  setNow('色素の溶液に、いろいろな波長の光を当てる実験','予想を決めたので、実験が使えるようになりました');
+  setTimeout(()=>$('expArea').scrollIntoView({behavior:'smooth',block:'start'}),50);
+}));
+
+/* 実験の色素リスト */
+(function(){
+  const sel=$('expPig');
+  Object.entries(PIGMENTS).forEach(([id,p])=>{ const o=document.createElement('option'); o.value=id; o.textContent=p.name; sel.appendChild(o); });
+  sel.value='chlA';
+})();
+const EXP = { mode:'mono', wl:550, pig:'chlA', photons:[], acc:0, glow:0, last:0 };
+
+function expT(l){ const a=ABS[EXP.pig]; return transOf(a[Math.round(l)-400]); }
+function expAvgT(){ const T=transArr(ABS[EXP.pig]); return T.reduce((s,v)=>s+v,0)/N; }
+function expSolution(){ return colorOf(transArr(ABS[EXP.pig])); }
+
+function updateExp(){
+  EXP.mode=document.querySelector('input[name=expMode]:checked').value;
+  EXP.wl=+$('expWl').value; EXP.pig=$('expPig').value;
+  $('expWl').disabled = EXP.mode==='white';
+  $('expWlTxt').textContent = EXP.mode==='white' ? '(白色光:全部)' : `${EXP.wl}nm(${lightName(EXP.wl)}の光)`;
+  let html,see,chg;
+  if(EXP.mode==='mono'){
+    const T=expT(EXP.wl), ab=Math.round((1-T)*100), pn=PIGMENTS[EXP.pig].name;
+    html=`<b>☀ ${EXP.wl}nm(${lightName(EXP.wl)}の光)</b>を当てると… 吸収された:<b>${ab}%</b> / 通り抜けた:<b>${100-ab}%</b>。`
+      +(T>0.6?' → <b>ほとんど素通り!</b> 光は明るいまま出てくる。':(T<0.2?' → <b>ほとんど吸収された!</b> 出てくる光はとても暗い。':''));
+    see=`${pn}の溶液に、${EXP.wl}nmの${lightName(EXP.wl)}の光を当てている`;
+    chg=`吸収${ab}%・通り抜け${100-ab}%`;
+    if(EXP.pig==='chlA'){ [450,550,660].forEach(t=>{ if(Math.abs(EXP.wl-t)<=12) S2.tried[t]=true; }); }
+  }else{
+    const sol=expSolution();
+    html=`<b>☀ 白色光</b>には全部の波長が混ざっています。吸収された波長が消えて、残った光が混ざると、溶液は <b>🧪 ${colorName(sol.rgb)}</b>に見えます。`;
+    see=`${PIGMENTS[EXP.pig].name}の溶液に白色光を当てている`; chg=`通り抜けた光の混ざった色=溶液の見かけの色:${colorName(sol.rgb)}`;
+  }
+  $('expReadout').innerHTML=html; setNow(see,chg);
+  document.querySelectorAll('#expChips .chip').forEach(c=>{
+    const t=+c.dataset.wl, d=S2.tried[t]; c.classList.toggle('done',d); c.querySelector('.ck').textContent=d?'✔':'';
+  });
+  updateReveal(); renderStages();
+}
+function updateReveal(){
+  const n=Object.values(S2.tried).filter(v=>!v).length;
+  $('revealBtn').disabled = n>0;
+  $('revealHint').innerHTML = n>0
+    ? `まず、<b>青(450nm)・緑(550nm)・赤(660nm)</b>の光を順番に当ててみよう(クロロフィルaで)。あと <b>${n}つ</b>。`
+    : '3つとも試せたね!予想と比べてみよう。';
+}
+document.querySelectorAll('input[name=expMode]').forEach(r=>r.addEventListener('change',updateExp));
+$('expWl').addEventListener('input',updateExp);
+$('expPig').addEventListener('change',updateExp);
+document.querySelectorAll('#expChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelector('input[name=expMode][value=mono]').checked=true; $('expWl').value=c.dataset.wl; updateExp();
+}));
+
+/* ----- 4段階の図 ----- */
+let stageTimer=null;
+function renderStages(){
+  if(!$('st1').clientWidth) return;
+  const A=ABS[EXP.pig], T=transArr(A), rem=A.map((a,i)=>1-T[i]);
+  drawSpec($('st1'),1,null);
+  drawSpec($('st2'),T,rem);
+  drawSpec($('st3'),T,null);
+  const c=colorOf(T), sw=$('st4sw');
+  sw.style.background=c.css; sw.style.color=textColorFor(c.rgb); sw.textContent=colorName(c.rgb);
+  $('st4name').textContent='吸収されずに残った光の混ざった色';
+}
+$('stagePlay').addEventListener('click',()=>{
+  const st=[...document.querySelectorAll('.stage')]; clearInterval(stageTimer);
+  st.forEach(s=>s.classList.add('dim')); let i=0;
+  const step=()=>{ if(i<st.length){ st[i].classList.remove('dim'); i++; } else clearInterval(stageTimer); };
+  step(); stageTimer=setInterval(step,1100);
+});
+
+/* ----- 答え合わせ ----- */
+function doReveal(){
+  const a=ABS.chlA, ab=l=>Math.round(a[l-400]*100);  // グラフ上の吸収率(%)
+  const abT=l=>Math.round((1-transOf(a[l-400]))*100);
+  const p=S2.pred, B=(p==='B');
+  let head;
+  if(B) head='<div class="msg ok"><b>せいかい!</b> その考え方で合っています。実験でも確かめられたね。</div>';
+  else if(p==='A') head='<div class="msg warn"><b>みんなそう思うよね。</b>「緑に見える=緑をよく吸収する」と考えたくなるよね。でも、実際はこうなんだ。</div>';
+  else head='<div class="msg warn"><b>わからなくて大丈夫!</b> 実験の結果から考えてみよう。</div>';
+  $('revealBody').innerHTML = head + `
+    <h3>実験の結果(クロロフィルa)</h3>
+    <table style="border-collapse:collapse;font-size:1em;margin-bottom:8px">
+      <tr><th style="text-align:left;padding:4px 14px 4px 0">当てた光</th><th>吸収された割合</th><th style="padding-left:14px">結果</th></tr>
+      <tr><td>青 450nm</td><td><b>${abT(450)}%</b></td><td style="padding-left:14px">暗くなった(よく吸収)</td></tr>
+      <tr><td>緑 550nm</td><td><b>${abT(550)}%</b></td><td style="padding-left:14px">明るいまま(あまり吸収しない)</td></tr>
+      <tr><td>赤 660nm</td><td><b>${abT(660)}%</b></td><td style="padding-left:14px">暗くなった(よく吸収)</td></tr>
+    </table>
+    <div class="key">物の色は、吸収されなかった光の色!</div>
+    <p>クロロフィルは<b>青紫と赤をよく吸収</b>して、<b>緑の光はあまり吸収しません</b>。吸収されなかった緑の光が目に届くから、緑に見えるんだ。</p>
+    <details><summary>葉の場合は?「反射」と「透過」(クリックで開く)</summary>
+      <p>緑の葉に白い光が当たると、青と赤の光は吸収されます。吸収されなかった緑の光は、葉の表面や内部で<span class="term" data-term="refl">反射</span>されたり、葉を<span class="term" data-term="trans">透過</span>したりします。葉を上から見ると反射した緑の光が、葉を光にすかして見ると透過した緑の光が目に届くので、どちらでも緑に見えます。</p></details>
+    <p>💡 吸収された光のエネルギーは、光合成(糖をつくるはたらき)に使われます。緑の光の多くは使われずに残ります。</p>`;
+  $('revealBody').querySelectorAll('[data-term]').forEach(el=>{
+    el.dataset.tip=TERMS[el.dataset.term]; el.tabIndex=0;
+    el.addEventListener('click',e=>{ const o=el.classList.contains('open'); closeTerms(); if(!o) el.classList.add('open'); e.stopPropagation(); });
+  });
+  $('revealBody').hidden=false; S2.revealed=true;
+  setNow('実験の結果の答え合わせ','「緑に見える=緑を吸収しない」ことが確かめられました');
+  $('revealBody').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+$('revealBtn').addEventListener('click',doReveal);
+$('revealSkip').addEventListener('click',doReveal);
+
+/* ----- 実験キャンバスのアニメーション ----- */
+const GEO = {W:960,H:360, srcX:140, cL:380, cR:560, cy:190, scrX:790};
+function spawnPhoton(){
+  const l = EXP.mode==='mono' ? EXP.wl : 400+Math.random()*300;
+  const T = expT(l), abs = Math.random()>T;
+  EXP.photons.push({x:GEO.srcX, y:GEO.cy+(Math.random()-.5)*14, l, abs,
+    stop:GEO.cL+20+Math.random()*(GEO.cR-GEO.cL-40), st:0});
+}
+function expLoop(ts){
+  requestAnimationFrame(expLoop);
+  const cv=$('expCv');
+  if(curMode!=='2'||curSub!=='A'||$('expArea').hidden||document.hidden){ EXP.last=ts; return; }
+  const dt=Math.min(0.05,(ts-(EXP.last||ts))/1000); EXP.last=ts;
+  EXP.acc+=dt*(EXP.mode==='mono'?15:22);
+  while(EXP.acc>=1){ spawnPhoton(); EXP.acc--; }
+  const v=230;
+  EXP.photons.forEach(p=>{
+    if(p.st===0){ p.x+=v*dt; if(p.abs&&p.x>=p.stop) p.st=1; else if(!p.abs&&p.x>GEO.cR) p.st=2; }
+    else if(p.st===1){ p.y-=140*dt; if(p.y<60){ p.dead=true; EXP.glow=Math.min(1,EXP.glow+0.12); } }
+    else { p.x+=v*dt; if(p.x>GEO.scrX) p.dead=true; }
+  });
+  EXP.photons=EXP.photons.filter(p=>!p.dead);
+  EXP.glow=Math.max(0,EXP.glow-dt*0.5);
+  drawExp(cv);
+}
+function drawExp(cv){
+  const {ctx}=fit(cv,GEO.H/GEO.W,GEO.W), G=GEO, mono=EXP.mode==='mono';
+  ctx.fillStyle='#0f1626'; ctx.fillRect(0,0,G.W,G.H);
+  const Tm = mono ? expT(EXP.wl) : expAvgT();
+  const sol = expSolution();
+  // 入射ビーム
+  ctx.fillStyle = mono ? wlCss(EXP.wl,0.35) : 'rgba(255,255,255,0.28)';
+  ctx.fillRect(G.srcX,G.cy-9,G.cL-G.srcX,18);
+  // 出射ビーム(明るさ・太さ=通り抜けた割合)
+  const th=18*Math.max(0.08,Tm);
+  ctx.fillStyle = mono ? wlCss(EXP.wl,0.25+0.6*Tm) : sol.css.replace('rgb','rgba').replace(')',`,${0.3+0.5*Tm})`);
+  ctx.fillRect(G.cR,G.cy-th/2,G.scrX-G.cR,th);
+  // 光源
+  ctx.fillStyle='#2a3550'; ctx.fillRect(20,G.cy-45,G.srcX-20,90); ctx.strokeStyle='#8fa3d0'; ctx.lineWidth=2; ctx.strokeRect(20,G.cy-45,G.srcX-20,90);
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 17px sans-serif';
+  ctx.fillText('☀ 光源',80,G.cy-8);
+  ctx.font='14px sans-serif'; ctx.fillText(mono?`${EXP.wl}nm`:'白色光',80,G.cy+18);
+  // 試験管(キュベット)
+  const liq = sol.css;
+  ctx.fillStyle=liq; ctx.globalAlpha=0.55; ctx.fillRect(G.cL,G.cy-75,G.cR-G.cL,150); ctx.globalAlpha=1;
+  ctx.strokeStyle='#dfe7f7'; ctx.lineWidth=4; ctx.strokeRect(G.cL,G.cy-75,G.cR-G.cL,150);
+  // 光の粒(丸=光 / ひし形=吸収されたエネルギー)
+  EXP.photons.forEach(p=>{
+    if(p.st===1){ ctx.fillStyle='#ffe066'; ctx.beginPath(); ctx.moveTo(p.x,p.y-6); ctx.lineTo(p.x+5,p.y); ctx.lineTo(p.x,p.y+6); ctx.lineTo(p.x-5,p.y); ctx.fill(); }
+    else { ctx.fillStyle=wlCss(p.l); ctx.beginPath(); ctx.arc(p.x,p.y,4.5,0,7); ctx.fill(); }
+  });
+  // エネルギー(光合成へ)
+  ctx.fillStyle=`rgba(255,224,102,${0.12+0.6*EXP.glow})`; ctx.fillRect(G.cL-10,10,G.cR-G.cL+20,44);
+  ctx.strokeStyle='#ffe066'; ctx.lineWidth=2; ctx.strokeRect(G.cL-10,10,G.cR-G.cL+20,44);
+  ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.fillText('◆ 吸収された光のエネルギー',(G.cL+G.cR)/2,29);
+  ctx.font='13px sans-serif'; ctx.fillText('→ 光合成に使われる',(G.cL+G.cR)/2,46);
+  // スクリーン(目に届く光の色)
+  let scr;
+  if(mono){ const c=wlRGB(EXP.wl), k=0.04+0.96*Tm; scr=c.map(v=>Math.round(v*k)); } else scr=sol.rgb;
+  ctx.fillStyle=`rgb(${scr})`; ctx.fillRect(G.scrX,G.cy-55,150,110);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(G.scrX,G.cy-55,150,110);
+  // ラベル(☀光の色 / 🧪見かけの色 を区別)
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 15px sans-serif';
+  ctx.fillText(mono?`☀ 入射する光:${lightName(EXP.wl)}`:'☀ 入射する光:白色光',(G.srcX+G.cL)/2+10,G.cy-30);
+  ctx.fillText(`☀ 通り抜けた光:${Math.round(Tm*100)}%`,(G.cR+G.scrX)/2,G.cy-30);
+  ctx.fillText('🧪 溶液(物体)の見かけの色',(G.cL+G.cR)/2,G.cy+105);
+  ctx.font='bold 17px sans-serif'; ctx.fillStyle='#ffe9a8';
+  ctx.fillText(mono?'(単色光だと、見かけの色は決まりません)':colorName(sol.rgb),(G.cL+G.cR)/2,G.cy+128);
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('目に届く光',G.scrX+75,G.cy+78);
+  ctx.font='14px sans-serif'; ctx.fillText(mono?(Tm<0.15?'ほぼ暗い':(Tm>0.6?'明るい':'うす暗い')):colorName(sol.rgb),G.scrX+75,G.cy+98);
+  // 凡例
+  ctx.textAlign='left'; ctx.font='13px sans-serif'; ctx.fillStyle='#cdd6ea';
+  ctx.fillText('● 光(色=波長)   ◆ 吸収されてエネルギーになった光',16,G.H-12);
+}
+requestAnimationFrame(expLoop);
+
+function renderA(){
+  if(!$('expArea').hidden) updateExp();
+  if(S2.pred===null) setNow('クロロフィルaが緑に見える理由についての問い','まだ予想していません。A・B・Cから選んでみよう');
+}
+
+/* ================================================================
+   モード2-B:吸収スペクトルシミュレーター
+   ================================================================ */
+const SIM = { sel:new Set(['chlA']), hover:null };
+(function(){
+  const mk=(id,p,host)=>{
+    const lab=document.createElement('label');
+    const symbol={circle:'●',square:'■',triangle:'▲',diamond:'◆',cross:'✕',star:'✚'}[p.mark];
+    lab.innerHTML=`<input type="checkbox" value="${id}" ${SIM.sel.has(id)?'checked':''}><span style="color:${p.color}">${symbol}</span> ${p.name}`;
+    lab.querySelector('input').addEventListener('change',e=>{ e.target.checked?SIM.sel.add(id):SIM.sel.delete(id); renderB(); });
+    host.appendChild(lab);
+  };
+  Object.entries(PIGMENTS).forEach(([id,p])=>{ if(!p.hidden) mk(id,p,$('simPigs')); });
+})();
+function simTotal(){
+  const ids=[...SIM.sel], tot=new Array(N).fill(0);
+  for(let i=0;i<N;i++){ let keep=1; ids.forEach(id=>keep*=1-ABS[id][i]); tot[i]=ids.length?1-keep:0; }
+  return tot;
+}
+function renderB(){
+  const cv=$('simGraph'); if(!cv.clientWidth) return;
+  const {ctx,w,h}=fit(cv,0.42);
+  drawGraphFrame(ctx,w,h,'吸収率');
+  const ids=[...SIM.sel], tot=simTotal();
+  if(ids.length>=2) plotCurve(ctx,w,h,tot,{color:'#111',lw:5,fill:'rgba(0,0,0,0.10)'});
+  ids.forEach(id=>{ const p=PIGMENTS[id]; ctx.strokeStyle=p.color; plotCurve(ctx,w,h,ABS[id],{color:p.color,lw:3,mark:p.mark}); });
+  if(SIM.hover!=null){
+    const x=gx(w,SIM.hover); ctx.strokeStyle='#111'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x,GM.T); ctx.lineTo(x,h-GM.B); ctx.stroke(); ctx.setLineDash([]);
+  }
+  drawRainbow($('simBar'));
+  // 読み取り表示
+  const avg=(a,b)=>{ let s=0,n=0; for(let l=a;l<=b;l++){ s+=tot[l-400]; n++; } return Math.round(s/n*100); };
+  let txt;
+  if(SIM.hover!=null){
+    const l=Math.round(SIM.hover);
+    txt=`<b>${l}nm(${lightName(l)}の光)</b>:`+(ids.length?ids.map(id=>`${PIGMENTS[id].name} ${Math.round(ABS[id][l-400]*100)}%`).join(' / '):'色素を選んでください');
+  }else if(ids.length){
+    txt=`選んだ色素が吸収する割合(平均):<b>青〜青紫(400〜490nm) ${avg(400,490)}%</b> / <b>緑(500〜570nm) ${avg(500,570)}%</b> / <b>赤(630〜690nm) ${avg(630,690)}%</b>`;
+  }else txt='色素を1つ以上選んでください。';
+  $('simReadout').innerHTML=txt;
+  const sw=$('simSw');
+  if(ids.length){ const c=colorOf(transArr(tot)); sw.style.background=c.css; sw.style.color=textColorFor(c.rgb); sw.textContent=colorName(c.rgb);
+    $('simSwTxt').innerHTML='<b>🧪 見かけの色</b><br>白色光を当てたとき、吸収されずに残った光の色'; }
+  else { sw.style.background='#eee'; sw.textContent=''; $('simSwTxt').textContent=''; }
+  setNow(ids.length?`${ids.map(i=>PIGMENTS[i].name).join('+')}の吸収スペクトル`:'色素が選ばれていません',
+    ids.length?`緑の光(500〜570nm)の吸収は平均${avg(500,570)}%`:'');
+}
+['pointermove','pointerdown'].forEach(ev=>$('simGraph').addEventListener(ev,e=>{
+  const r=e.target.getBoundingClientRect(); SIM.hover=lamAt(r.width,e.clientX-r.left); renderB();
+}));
+$('simGraph').addEventListener('pointerleave',()=>{ SIM.hover=null; renderB(); });
+
+/* ================================================================
+   モード2-C:引き算パズル
+   ================================================================ */
+/* 問題データ:remove=取り除く範囲[nm,nm]、choices=選択肢、ans=正解の番号 */
+const PUZZLES = [
+  { remove:[[400,490],[620,700]], label:'青と赤', choices:['緑','赤','紫','白'], ans:0, why:'青と赤を取り除くと、間の緑〜黄緑の光だけが残ります。これが、葉(クロロフィル)が緑に見る理由です。' },
+  { remove:[[400,570]], label:'青と緑', choices:['青','赤っぽい色','緑','黒'], ans:1, why:'青と緑を取り除くと、黄〜赤の光が残って、赤っぽく見えます。' },
+  { remove:[[490,580]], label:'緑', choices:['緑','黄','赤紫(ピンク)','白'], ans:2, why:'緑を取り除くと、青紫と赤の光が残ります。この2つが混ざると赤紫(ピンク)に見えます。' },
+  { remove:[[400,490]], label:'青', choices:['青','黄〜だいだい','紫','白'], ans:1, why:'青を取り除くと、緑と赤の光が混ざって、黄〜だいだい色に見えます。' },
+  { remove:[[590,700]], label:'赤〜だいだい', choices:['赤','黄','青緑(シアン)','紫'], ans:2, why:'赤を取り除くと、青と緑の光が残って、青緑(シアン)に見えます。' }
+];
+const PZ={i:0,done:false,score:0};
+function boxArr(ranges,strength){
+  return Array.from({length:N},(_,i)=>{
+    const l=400+i; let a=0;
+    ranges.forEach(([f,t])=>{ a+=strength*clamp01((l-f)/8+0.5)*clamp01((t-l)/8+0.5); });
+    return Math.min(1,a);
+  });
+}
+function renderC(){
+  const q=PUZZLES[PZ.i];
+  $('puzQ').innerHTML=`<b>問${PZ.i+1}/${PUZZLES.length}</b> 白色光から、<b>${q.label}の光(${q.remove.map(r=>r[0]+'〜'+r[1]+'nm').join('、')})</b>を取り除いたら、何色が残る?(斜線=取り除いた部分)`;
+  if(!$('puzCv1').clientWidth) return;
+  const A=boxArr(q.remove,1), S=A.map(a=>1-a);
+  drawSpec($('puzCv1'),S,A,0.3);
+  const host=$('puzChoices'); host.innerHTML='';
+  q.choices.forEach((c,k)=>{
+    const b=document.createElement('button'); b.className='choice'; b.textContent=['A','B','C','D'][k]+'. '+c;
+    b.addEventListener('click',()=>answerPuzzle(k)); host.appendChild(b);
+  });
+  $('puzResult').hidden=true; PZ.done=false;
+  setNow('「取り除いた波長」と、残る光の色の関係',`問${PZ.i+1}:${q.label}の光を取り除く`);
+}
+function answerPuzzle(k){
+  if(PZ.done) return; PZ.done=true;
+  const q=PUZZLES[PZ.i], A=boxArr(q.remove,1), S=A.map(a=>1-a*0.98), ok=k===q.ans;
+  if(ok) PZ.score++;
+  [...$('puzChoices').children].forEach((b,j)=>{ if(j===q.ans) b.classList.add('right'); else if(j===k) b.classList.add('wrong'); });
+  drawSpec($('puzCv2'),S,null,0.5);
+  const c=colorOf(S), sw=$('puzSw'); sw.style.background=c.css; sw.style.color=textColorFor(c.rgb); sw.textContent=colorName(c.rgb);
+  const m=$('puzMsg'); m.className='msg '+(ok?'ok':'warn');
+  m.innerHTML=(ok?'<b>せいかい!</b> ':'<b>おしい!</b> ')+q.why+(PZ.i===PUZZLES.length-1?` <br><b>結果:${PZ.score}/${PUZZLES.length}問せいかい</b>`:'');
+  $('puzNext').textContent = PZ.i===PUZZLES.length-1 ? 'もう一度はじめから' : '次の問題へ';
+  $('puzResult').hidden=false;
+  setNow('取り除いたあとに残った光と、見える色',`残った光は「${colorName(c.rgb)}」に見える`);
+}
+$('puzNext').addEventListener('click',()=>{ if(PZ.i===PUZZLES.length-1){ PZ.i=0; PZ.score=0; } else PZ.i++; renderC(); });
+
+/* ================================================================
+   モード2-D:オリジナル色素づくり
+   ================================================================ */
+const CUS = { bands:[], drag:null };
+function cusAbs(extra){
+  const all=CUS.bands.concat(extra?[extra]:[]);
+  return Array.from({length:N},(_,i)=>{
+    const l=400+i; let a=0;
+    all.forEach(b=>{ a+=b.s*clamp01((l-b.f)/10+0.5)*clamp01((b.t-l)/10+0.5); });
+    return Math.min(1,a);
+  });
+}
+function renderD(){
+  const cv=$('cusGraph'); if(!cv.clientWidth) return;
+  const {ctx,w,h}=fit(cv,0.38);
+  drawGraphFrame(ctx,w,h,'吸収率');
+  const prev = CUS.drag && Math.abs(CUS.drag.b-CUS.drag.a)>=5 ? {f:Math.min(CUS.drag.a,CUS.drag.b),t:Math.max(CUS.drag.a,CUS.drag.b),s:+$('cusStr').value} : null;
+  const A=cusAbs(prev);
+  plotCurve(ctx,w,h,A,{color:'#222',lw:3,fill:'rgba(80,80,80,0.18)'});
+  if(!CUS.bands.length&&!prev){
+    ctx.fillStyle='#555'; ctx.font='bold 17px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('ここをドラッグして、吸収する波長の範囲を決めよう',(w+GM.L)/2,h/2);
+  }
+  drawRainbow($('cusBar'));
+  const T=transArr(A), c=colorOf(T);
+  $('cusTube').style.background=c.css; $('cusName').textContent=colorName(c.rgb);
+  drawSpec($('cusRem'),T,A.map(a=>1-transOf(a)),0.5);
+  // 説明文:領域ごとに、吸収(>50%)・残る(<30%)を判定
+  const zones=[['青〜青紫',400,490],['緑',495,570],['黄〜だいだい',575,620],['赤',625,700]];
+  const av=(a,b)=>{ let s=0,n=0; for(let l=a;l<=b;l++){ s+=A[l-400]; n++; } return s/n; };
+  const ab=zones.filter(z=>av(z[1],z[2])>=0.5).map(z=>z[0]), re=zones.filter(z=>av(z[1],z[2])<0.3).map(z=>z[0]);
+  $('cusMsg').innerHTML = `吸収している色:<b>${ab.join('・')||'(なし)'}</b> → 残っている色:<b>${re.join('・')||'(なし)'}</b> → 溶液は <b>${colorName(c.rgb)}</b> に見える。`
+    + `<br><b>引き算の発想:</b>見える色=白色光から、吸収された色を引いた残り!`;
+  setNow('自分でつくった色素の吸収スペクトルと溶液の色',`吸収:${ab.join('・')||'なし'} / 見える色:${colorName(c.rgb)}`);
+}
+(function(){
+  const cv=$('cusGraph');
+  const lam=e=>{ const r=cv.getBoundingClientRect(); return Math.round(lamAt(r.width,e.clientX-r.left)/5)*5; };
+  cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture(e.pointerId); const l=lam(e); CUS.drag={a:l,b:l}; });
+  cv.addEventListener('pointermove',e=>{ if(CUS.drag){ CUS.drag.b=lam(e); renderD(); } });
+  const end=()=>{ const d=CUS.drag; CUS.drag=null;
+    if(d&&Math.abs(d.b-d.a)>=5) CUS.bands.push({f:Math.min(d.a,d.b),t:Math.max(d.a,d.b),s:+$('cusStr').value});
+    renderD(); };
+  cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+})();
+$('cusUndo').addEventListener('click',()=>{ CUS.bands.pop(); renderD(); });
+$('cusClear').addEventListener('click',()=>{ CUS.bands=[]; renderD(); });
+$('cusFrom').addEventListener('input',()=>{ $('cusFromT').textContent=$('cusFrom').value; });
+$('cusTo').addEventListener('input',()=>{ $('cusToT').textContent=$('cusTo').value; });
+$('cusAdd').addEventListener('click',()=>{
+  const f=+$('cusFrom').value, t=+$('cusTo').value;
+  if(t-f>=5){ CUS.bands.push({f,t,s:+$('cusStr').value}); renderD(); }
+});
+const PRESETS = { bg:[[400,570]], br:[[400,490],[620,700]], g:[[490,580]], gr:[[490,700]] };
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  CUS.bands=PRESETS[b.dataset.preset].map(([f,t])=>({f,t,s:1})); renderD();
+}));
+
+/* ================================================================
+   モード1:光と色の基本
+   ================================================================ */
+/* 光源のスペクトル(単色光はガウス形) */
+const gauss=(c,s)=>Array.from({length:N},(_,i)=>Math.exp(-Math.pow(400+i-c,2)/(2*s*s)));
+const sig=x=>1/(1+Math.exp(-x));
+const LIGHTS = {
+  white:{name:'白色光', S:new Array(N).fill(1)},
+  red:{name:'赤い光', S:gauss(645,14)},
+  green:{name:'緑の光', S:gauss(540,14)},
+  blue:{name:'青い光', S:gauss(455,12)}
+};
+/* 物体の反射率(波長ごと 0〜1)。数値はここで編集できます */
+const lam=i=>400+i;
+const OBJS = {
+  red:{name:'赤いもの', R:Array.from({length:N},(_,i)=>0.04+0.88*sig((lam(i)-625)/6))},
+  green:{name:'緑のもの', R:Array.from({length:N},(_,i)=>0.04+0.80*Math.exp(-Math.pow((lam(i)-540)/38,2)))},
+  blue:{name:'青いもの', R:Array.from({length:N},(_,i)=>0.04+0.84*Math.exp(-Math.pow((lam(i)-455)/34,2)))},
+  yellow:{name:'黄色いもの', R:Array.from({length:N},(_,i)=>0.04+0.88*sig((lam(i)-535)/6))},
+  white:{name:'白いもの', R:new Array(N).fill(0.92)},
+  black:{name:'黒いもの', R:new Array(N).fill(0.04)},
+  leaf:{name:'緑の葉(葉の色素)', R:ABS.leaf.map(a=>0.04+1.0*Math.pow(transOf(a),2.0))}
+};
+const M1 = { light:'white', obj:'green', pred:null };
+(function(){
+  Object.entries(LIGHTS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v.name; $('m1Light').appendChild(o); });
+  Object.entries(OBJS).forEach(([k,v])=>{ const o=document.createElement('option'); o.value=k; o.textContent=v.name; $('m1Obj').appendChild(o); });
+  $('m1Obj').value='green';
+})();
+function lightGain(k){ if(k==='white') return 1; return 1/colorOf(LIGHTS[k].S,1).m; }   // 単色光は見やすい明るさにそろえる
+function m1Calc(){
+  const L=LIGHTS[M1.light].S, R=OBJS[M1.obj].R, out=L.map((v,i)=>v*R[i]), g=lightGain(M1.light);
+  return {L,R,out,g,col:colorOf(out,g),lightCol:colorOf(L,g),objCol:colorOf(R,1)};
+}
+function renderMode1(){
+  const sc=$('m1Scene'); if(!sc.clientWidth) return;
+  M1.light=$('m1Light').value; M1.obj=$('m1Obj').value;
+  const c=m1Calc();
+  drawSpec($('m1G1'),c.L,null,0.7); drawSpec($('m1G2'),c.R,null,0.7); drawSpec($('m1G3'),c.out,null,0.7);
+  // シーン図
+  const {ctx}=fit(sc,300/960,960); const W=960,H=300;
+  ctx.fillStyle='#0f1626'; ctx.fillRect(0,0,W,H);
+  const cy=170, lightCss=c.lightCol.css;
+  // 光源
+  ctx.fillStyle='#2a3550'; ctx.fillRect(20,cy-50,110,100); ctx.strokeStyle='#8fa3d0'; ctx.lineWidth=2; ctx.strokeRect(20,cy-50,110,100);
+  ctx.fillStyle=lightCss; ctx.beginPath(); ctx.arc(75,cy-8,22,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText('☀ 光源',75,cy+36);
+  // 入射光
+  [-30,-10,10,30].forEach(dy=>{ ctx.strokeStyle=lightCss; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(135,cy+dy); ctx.lineTo(370,cy+dy*0.5); ctx.stroke(); });
+  ctx.fillStyle='#fff'; ctx.fillText(`☀ 入射する光:${LIGHTS[M1.light].name}`,255,cy-52);
+  // 物体
+  ctx.fillStyle=c.objCol.css; ctx.fillRect(370,cy-50,100,100); ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.strokeRect(370,cy-50,100,100);
+  ctx.fillStyle='#fff'; ctx.fillText('🧪 '+OBJS[M1.obj].name,420,cy+78);
+  ctx.font='13px sans-serif'; ctx.fillStyle='#cdd6ea'; ctx.fillText('(枠の中の色は、白色光で見たときの色)',420,cy+98);
+  // 反射光
+  const refl=clamp01(c.out.reduce((s,v)=>s+v,0)/Math.max(1e-6,c.L.reduce((s,v)=>s+v,0))*1.6);
+  ctx.globalAlpha=0.15+0.85*clamp01(c.col.m*3+refl*0.2);
+  [-12,0,12].forEach(dy=>{ ctx.strokeStyle=c.col.css==='rgb(0,0,0)'?'#444':c.col.css; ctx.lineWidth=3+refl*3; ctx.setLineDash([10,6]); ctx.beginPath(); ctx.moveTo(470,cy-30+dy); ctx.lineTo(700,cy-30+dy*0.5); ctx.stroke(); });
+  ctx.setLineDash([]); ctx.globalAlpha=1;
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('☀ 反射されて目に届く光',590,cy-62);
+  // 目に届く光の色
+  ctx.fillStyle=c.col.css; ctx.fillRect(720,cy-60,200,100); ctx.strokeStyle='#fff'; ctx.strokeRect(720,cy-60,200,100);
+  ctx.fillStyle='#fff'; ctx.fillText('👁 目に届く光の色',820,cy+65); ctx.font='bold 17px sans-serif'; ctx.fillStyle='#ffe9a8'; ctx.fillText(colorName(c.col.rgb),820,cy+90);
+  // 説明
+  const name=colorName(c.col.rgb), dark=c.col.m<0.08;
+  $('m1Readout').innerHTML = dark
+    ? `${LIGHTS[M1.light].name}には、${OBJS[M1.obj].name}が反射できる波長がほとんど含まれていません。<b>反射される光がほとんどないので、${name}</b>に見えます。`
+    : `${LIGHTS[M1.light].name}のうち、${OBJS[M1.obj].name}が反射した光が目に届き、<b>${name}</b>に見えます。`;
+  if(M1.obj==='leaf') $('m1Readout').innerHTML+=' ※本物の葉は透過する光もありますが、ここでは反射だけで考えています。';
+  setNow(`${LIGHTS[M1.light].name}を${OBJS[M1.obj].name}に当てたとき`,`目に届く光の色:${name}`);
+}
+$('m1Light').addEventListener('change',renderMode1);
+$('m1Obj').addEventListener('change',renderMode1);
+document.querySelectorAll('#m1Choices .choice').forEach(b=>b.addEventListener('click',()=>{
+  M1.pred=b.dataset.k;
+  document.querySelectorAll('#m1Choices .choice').forEach(x=>x.classList.toggle('sel',x===b));
+  $('m1Light').value='red'; $('m1Obj').value='leaf'; renderMode1();
+  const fb=$('m1PredFb'); fb.hidden=false;
+  const tone = M1.pred==='C' ? '<b>よく気づいたね!</b> ' : '<b>みんなそう思うよね。</b> ';
+  fb.className='msg '+(M1.pred==='C'?'ok':'warn');
+  fb.innerHTML=tone+`光源を「赤い光」、物体を「緑の葉」にセットしました(下の実験)。結果は<b>${colorName(m1Calc().col.rgb)}</b>。葉は緑の光を反射するから緑に見えるのに、赤い光には緑がないので反射する光がほとんどありません。<b>色は、物体が反射した光で決まる</b>のです。光源を白色光に戻すと、葉は緑(黄緑っぽい緑)に見えます。`;
+  $('m1Scene').scrollIntoView({behavior:'smooth',block:'center'});
+}));
+/* 加法混色 */
+function renderAdd(){
+  const r=+$('aR').value, g=+$('aG').value, b=+$('aB').value;
+  $('aRt').textContent=r; $('aGt').textContent=g; $('aBt').textContent=b;
+  const sw=$('addSw'); sw.style.background=`rgb(${r},${g},${b})`; sw.style.color=textColorFor([r,g,b]);
+  const nm=colorName([r,g,b]); sw.textContent=nm;
+  $('addTxt').innerHTML=`R=${r} G=${g} B=${b} → 混ぜた光は <b>${nm}</b>`;
+  setNow('赤・緑・青の光を混ぜたときの色',`混ぜた色:${nm}`);
+}
+['aR','aG','aB'].forEach(id=>$(id).addEventListener('input',renderAdd));
+document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{
+  const [r,g,bl]=b.dataset.add.split(',');
+  $('aR').value=r; $('aG').value=g; $('aB').value=bl; renderAdd();
+}));
+
+/* ================================================================
+   モード2-E:本物の葉でためす(吸収・反射・透過)
+   ================================================================ */
+/* 葉の光学モデル(おおよそ):吸収は葉の色素から、残りを反射と透過に分ける */
+const LEAF_REFLECT_SHARE = 0.55;   // 吸収されなかった光のうち、反射される割合(残りは透過)
+const LEAF_A = ABS.leaf.map(a=>Math.min(0.97,0.06+0.92*a));
+const LEAF_R = LEAF_A.map(a=>(1-a)*LEAF_REFLECT_SHARE);
+const LEAF_T = LEAF_A.map(a=>(1-a)*(1-LEAF_REFLECT_SHARE));
+const LF = { mode:'white', wl:550, photons:[], acc:0, glow:0, last:0 };
+const LG = { sx:540, sy:210, ex:850, ey:240 };   // 葉の断面(拡大図):左端x, 上端y, 右端x, 下端y
+
+function leafState(){
+  LF.mode=document.querySelector('input[name=leafMode]:checked').value; LF.wl=+$('leafWl').value;
+  $('leafWl').disabled = LF.mode==='white';
+  $('leafWlTxt').textContent = LF.mode==='white' ? '(白色光:全部の波長)' : `${LF.wl}nm(${lightName(LF.wl)}の光)`;
+}
+function leafColors(){
+  if(LF.mode==='white') return { top:colorOf(LEAF_R,1.8), bot:colorOf(LEAF_T,2.2) };
+  const i=LF.wl-400, c=wlRGB(LF.wl);
+  const mk=(v,max)=>{ const k=0.03+0.97*clamp01(v/max), rgb=c.map(x=>Math.round(x*k)); return {rgb,css:`rgb(${rgb})`}; };
+  return { top:mk(LEAF_R[i],0.5), bot:mk(LEAF_T[i],0.45) };
+}
+function renderLeaf(){
+  const cv=$('leafCv'); if(!cv.clientWidth) return;
+  leafState();
+  const col=leafColors(), set=(id,c)=>{ const e=$(id); e.style.background=c.css; e.style.color=textColorFor(c.rgb); e.textContent=colorName(c.rgb); };
+  set('leafTop',col.top); set('leafBottom',col.bot);
+  let html,see,chg;
+  if(LF.mode==='mono'){
+    const i=LF.wl-400, a=Math.round(LEAF_A[i]*100), r=Math.round(LEAF_R[i]*100), t=100-a-r;
+    html=`☀ ${LF.wl}nm(${lightName(LF.wl)}の光)を当てると… <b>吸収 ${a}%</b> / <b>反射 ${r}%</b> / <b>透過 ${t}%</b>。`
+      +(a<45?' → 大部分は吸収されず、<b>反射や透過で出ていく</b>。':' → 大部分が<b>吸収されて、光合成に使われる</b>。');
+    see=`葉に${LF.wl}nmの${lightName(LF.wl)}の光を当てている`; chg=`吸収${a}%・反射${r}%・透過${t}%`;
+  }else{
+    html=`白色光を当てると、青と赤は吸収され、吸収されなかった緑の光が反射・透過されます。上から見ると <b>${colorName(col.top.rgb)}</b>、すかして見ると <b>${colorName(col.bot.rgb)}</b> に見えます。`;
+    see='葉に白色光(太陽の光)を当てている'; chg=`上から:${colorName(col.top.rgb)} / 下から:${colorName(col.bot.rgb)}`;
+  }
+  $('leafReadout').innerHTML=html; setNow(see,chg);
+}
+document.querySelectorAll('input[name=leafMode]').forEach(r=>r.addEventListener('change',renderLeaf));
+$('leafWl').addEventListener('input',()=>{ document.querySelector('input[name=leafMode][value=mono]').checked=true; renderLeaf(); });
+document.querySelectorAll('#leafChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelector('input[name=leafMode][value=mono]').checked=true; $('leafWl').value=c.dataset.wl; renderLeaf();
+}));
+document.querySelectorAll('#leafChoices .choice').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.k, ok=k==='B', i=150;   // 550nm
+  document.querySelectorAll('#leafChoices .choice').forEach(x=>x.classList.toggle('sel',x===b));
+  document.querySelector('input[name=leafMode][value=mono]').checked=true; $('leafWl').value=550; renderLeaf();
+  const fb=$('leafPredFb'); fb.hidden=false; fb.className='msg '+(ok?'ok':'warn');
+  fb.innerHTML=(ok?'<b>せいかい!</b> ':'<b>みんなそう思うよね。</b> ')
+    +`実験すると、緑の光(550nm)は吸収されたのが<b>${Math.round(LEAF_A[i]*100)}%</b>だけで、残りは反射(${Math.round(LEAF_R[i]*100)}%)か透過(${Math.round(LEAF_T[i]*100)}%)しました。青(450nm)や赤(660nm)に切りかえて、くらべてみよう。`;
+}));
+
+function leafSpawn(){
+  const l = LF.mode==='mono' ? LF.wl : 400+Math.random()*300, i=Math.round(l)-400, r=Math.random();
+  const a=LEAF_A[i], rf=LEAF_R[i];
+  const out = r<a ? 'abs' : (r<a+rf ? 'ref' : 'tra');
+  const sx=500+Math.random()*30, sy=30;
+  const tx=LG.sx+60+Math.random()*(LG.ex-LG.sx-120), ty=LG.sy;     // 葉の表面に当たる点
+  const d=Math.hypot(tx-sx,ty-sy), v=240;
+  LF.photons.push({x:sx,y:sy,vx:(tx-sx)/d*v,vy:(ty-sy)/d*v,l,out,st:0,depth:LG.sy+14+Math.random()*34,tx,ty});
+}
+function leafLoop(ts){
+  requestAnimationFrame(leafLoop);
+  const cv=$('leafCv');
+  if(curMode!=='2'||curSub!=='E'||document.hidden){ LF.last=ts; return; }
+  const dt=Math.min(0.05,(ts-(LF.last||ts))/1000); LF.last=ts;
+  LF.acc+=dt*(LF.mode==='mono'?12:20); while(LF.acc>=1){ leafSpawn(); LF.acc--; }
+  LF.photons.forEach(p=>{
+    if(p.st===0){                         // 入射中
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      if(p.y>=p.ty){
+        if(p.out==='ref'){ p.st=2; const ang=(-0.35-Math.random()*1.1); p.vx=Math.cos(ang)*240; p.vy=Math.sin(ang)*240; }
+        else if(p.out==='abs'){ p.st=1; p.vx*=0.5; p.vy*=0.5; }
+        else { p.st=3; p.vx*=0.6; p.vy=Math.abs(p.vy)*0.9+60; }
+      }
+    }else if(p.st===1){                    // 葉の中へ → 吸収
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      if(p.y>=p.depth){ p.st=4; p.tx2=560+Math.random()*100; p.ty2=360; }
+    }else if(p.st===4){                    // エネルギー(◆)が「光合成へ」の箱に向かう
+      const dx=p.tx2-p.x, dy=p.ty2-p.y, d=Math.hypot(dx,dy)||1; p.x+=dx/d*150*dt; p.y+=dy/d*150*dt;
+      if(d<10){ p.dead=true; LF.glow=Math.min(1,LF.glow+0.1); }
+    }else{ p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.y<-10||p.y>430||p.x>965) p.dead=true; }
+  });
+  LF.photons=LF.photons.filter(p=>!p.dead);
+  LF.glow=Math.max(0,LF.glow-dt*0.5);
+  drawLeaf(cv);
+}
+function drawLeafShape(ctx,x,y,len,ang,css){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.bezierCurveTo(len*0.25,-len*0.32,len*0.75,-len*0.30,len,0);
+  ctx.bezierCurveTo(len*0.75,len*0.30,len*0.25,len*0.32,0,0);
+  ctx.fillStyle=css; ctx.fill(); ctx.strokeStyle='#0d2b12'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(len*0.95,0); ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=2; ctx.stroke();
+  for(let k=1;k<5;k++){ const px=len*k*0.18; ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px+len*0.12,-len*0.15*(1-k*0.12)); ctx.moveTo(px,0); ctx.lineTo(px+len*0.12,len*0.15*(1-k*0.12)); ctx.lineWidth=1; ctx.stroke(); }
+  ctx.restore();
+}
+function drawLeaf(cv){
+  const {ctx}=fit(cv,420/960,960), W=960,H=420, mono=LF.mode==='mono';
+  const col=leafColors();
+  ctx.fillStyle='#0f1626'; ctx.fillRect(0,0,W,H);
+  // ---- 左:植物のようす ----
+  ctx.fillStyle='#16233d'; ctx.fillRect(0,0,470,H);
+  const lightCss = mono ? wlCss(LF.wl) : '#fff7c0';
+  // 太陽(光源)と光線
+  ctx.fillStyle=lightCss; ctx.beginPath(); ctx.arc(60,60,30,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='left'; ctx.fillText('☀ '+(mono?`${LF.wl}nmの光`:'太陽の光'),20,112);
+  ctx.strokeStyle=mono?wlCss(LF.wl,0.55):'rgba(255,247,192,0.5)'; ctx.lineWidth=4;
+  [[90,80,215,170],[100,60,260,140],[80,95,190,200]].forEach(([a,b,c,d])=>{ ctx.beginPath(); ctx.moveTo(a,b); ctx.lineTo(c,d); ctx.stroke(); });
+  // 植木鉢・茎
+  ctx.fillStyle='#8a4b24'; ctx.beginPath(); ctx.moveTo(180,370); ctx.lineTo(300,370); ctx.lineTo(285,418); ctx.lineTo(195,418); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#4f7a2a'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(240,372); ctx.bezierCurveTo(238,320,246,270,240,230); ctx.stroke();
+  // 葉(上から見た色)。大きい1枚が拡大の対象
+  const css=col.top.css;
+  drawLeafShape(ctx,240,300,120,-0.5,css); drawLeafShape(ctx,240,285,115,-2.65,css);
+  drawLeafShape(ctx,241,250,100,-1.1,css); drawLeafShape(ctx,240,255,100,-2.05,css);
+  drawLeafShape(ctx,238,230,135,-0.12,css);
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 15px sans-serif';
+  ctx.fillText('🌿 葉の見かけの色(上から)',235,H-2);
+  ctx.strokeStyle='#ffe066'; ctx.lineWidth=2; ctx.setLineDash([6,4]); ctx.strokeRect(300,190,110,80); ctx.setLineDash([]);
+  ctx.fillStyle='#ffe066'; ctx.font='13px sans-serif'; ctx.fillText('この部分を右に拡大 →',355,184);
+  // ---- 右:葉の断面(拡大) ----
+  ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.font='bold 15px sans-serif'; ctx.fillText('葉の断面(拡大)',490,20);
+  const L=LG, w=L.ex-L.sx;
+  const layers=[['#cfe8b8',8,'上表皮'],['#6fb25a',24,'柵状組織'],['#9fcf7f',26,'海綿状組織'],['#cfe8b8',8,'下表皮']];
+  let y=L.sy;
+  layers.forEach(([c,h,n])=>{ ctx.fillStyle=c; ctx.fillRect(L.sx,y,w,h); ctx.fillStyle='#fff'; ctx.font='12px sans-serif'; ctx.fillText(n,L.ex+6,y+h/2+4); y+=h; });
+  ctx.fillStyle='#1f6b2a';   // 葉緑体(クロロフィルをもつ)
+  for(let k=0;k<26;k++){ const x=L.sx+12+(k%13)*24, yy=L.sy+8+8+(k<13?0:30); ctx.beginPath(); ctx.ellipse(x,yy+((k*7)%5),6,3.5,0,0,7); ctx.fill(); }
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(L.sx,L.sy,w,y-L.sy);
+  ctx.fillStyle='#bff0a8'; ctx.font='12px sans-serif'; ctx.fillText('● 葉緑体(クロロフィルをふくむ)',L.sx,L.sy+66+18);
+  // 光の粒
+  LF.photons.forEach(p=>{
+    if(p.st===4){ ctx.fillStyle='#ffe066'; ctx.beginPath(); ctx.moveTo(p.x,p.y-6); ctx.lineTo(p.x+5,p.y); ctx.lineTo(p.x,p.y+6); ctx.lineTo(p.x-5,p.y); ctx.fill(); }
+    else { ctx.fillStyle=wlCss(p.l); ctx.strokeStyle='#0008'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(p.x,p.y,4.5,0,7); ctx.fill(); }
+  });
+  // ラベル
+  ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif';
+  ctx.fillText('☀ 入射する光',490,50);
+  ctx.fillText('☀ 反射した光',770,70);
+  ctx.fillStyle=col.top.css; ctx.fillRect(800,80,60,24); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(800,80,60,24);
+  ctx.fillStyle='#fff'; ctx.fillText('☀ 透過した光',800,H-34);
+  ctx.fillStyle=col.bot.css; ctx.fillRect(800,H-28,60,24); ctx.strokeRect(800,H-28,60,24);
+  // エネルギー箱(光合成へ)
+  ctx.fillStyle=`rgba(255,224,102,${0.12+0.6*LF.glow})`; ctx.fillRect(540,350,190,46);
+  ctx.strokeStyle='#ffe066'; ctx.lineWidth=2; ctx.strokeRect(540,350,190,46);
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 14px sans-serif'; ctx.fillText('◆ 吸収された光のエネルギー',635,370);
+  ctx.font='13px sans-serif'; ctx.fillText('→ 光合成に使われる',635,388);
+  ctx.textAlign='left'; ctx.fillStyle='#cdd6ea'; ctx.font='13px sans-serif'; ctx.fillText('● 光(色=波長)  ◆ 吸収されてエネルギーになった光',490,H-4);
+}
+requestAnimationFrame(leafLoop);
+
+/* ================================================================
+   起動
+   ================================================================ */
+renderAdd(); showMode('2'); showSub('A'); updateExp();
+</script>
+</body>
+</html>
